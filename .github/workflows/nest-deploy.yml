@@ -1,0 +1,51 @@
+name: Deploy NestJS API
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Build NestJS
+        run: pnpm build
+
+      - name: Upload to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: '.'
+          target: '/var/www/nest-api'
+          strip_components: 1
+
+      - name: Start with PM2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/nest-api
+            pnpm install --prod --frozen-lockfile
+            npm install -g pm2
+            pm2 stop nest-api || true
+            pm2 start dist/main.js --name nest-api
+            pm2 startup
+            pm2 save
