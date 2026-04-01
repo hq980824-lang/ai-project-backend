@@ -19,19 +19,24 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+                envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
+            }),
             typeorm_1.TypeOrmModule.forRootAsync({
                 inject: [config_1.ConfigService],
-                useFactory: (config) => ({
-                    type: 'mysql',
-                    host: config.get('DB_HOST'),
-                    port: config.get('DB_PORT'),
-                    username: config.get('DB_USERNAME'),
-                    password: config.get('DB_PASSWORD'),
-                    database: config.get('DB_DATABASE'),
-                    autoLoadEntities: true,
-                    synchronize: true,
-                }),
+                useFactory: (config) => {
+                    return {
+                        type: 'mysql',
+                        host: config.get('DB_HOST'),
+                        port: config.get('DB_PORT'),
+                        username: config.get('DB_USERNAME'),
+                        password: config.get('DB_PASSWORD'),
+                        database: config.get('DB_DATABASE'),
+                        autoLoadEntities: true,
+                        synchronize: process.env.NODE_ENV === 'development',
+                    };
+                },
             }),
             users_module_js_1.UsersModule,
         ],
