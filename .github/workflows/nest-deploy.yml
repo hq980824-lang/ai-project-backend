@@ -48,7 +48,6 @@ jobs:
             cd /var/www/nest-api
             pnpm install --prod --frozen-lockfile
             npm install -g pm2
-            pm2 stop nest-api || true
-            pm2 start dist/main.js --name nest-api
+            pm2 startOrReload ecosystem.config.cjs --update-env
             pm2 startup
             pm2 save
