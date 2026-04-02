@@ -45,6 +45,46 @@ let UsersService = class UsersService {
             throw new common_1.NotFoundException('用户不存在');
         return user;
     }
+    async findOnePublic(id) {
+        const user = await this.usersRepo.findOne({
+            where: { id },
+            select: { id: true, username: true, phone: true, status: true },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('用户不存在');
+        return user;
+    }
+    findByPhone(phone) {
+        return this.usersRepo.findOne({ where: { phone } });
+    }
+    findByPhoneWithSecret(phone) {
+        return this.usersRepo.findOne({
+            where: { phone },
+            select: {
+                id: true,
+                username: true,
+                phone: true,
+                status: true,
+                passwordHash: true,
+            },
+        });
+    }
+    async createWithPasswordHash(input) {
+        const existing = await this.usersRepo.findOne({
+            where: [{ username: input.username }, { phone: input.phone }],
+            select: { id: true },
+        });
+        if (existing) {
+            throw new common_1.ConflictException('username 或 phone 已存在');
+        }
+        const entity = this.usersRepo.create({
+            username: input.username,
+            phone: input.phone,
+            passwordHash: input.passwordHash,
+            status: input.status,
+        });
+        return this.usersRepo.save(entity);
+    }
     async update(id, dto) {
         const user = await this.findOne(id);
         if (dto.username && dto.username !== user.username) {

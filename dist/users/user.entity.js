@@ -16,6 +16,7 @@ let UserEntity = class UserEntity {
     id;
     username;
     phone;
+    passwordHash;
     status;
 };
 exports.UserEntity = UserEntity;
@@ -33,6 +34,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20 }),
     __metadata("design:type", String)
 ], UserEntity.prototype, "phone", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'password_hash', type: 'varchar', length: 128, nullable: true }),
+    __metadata("design:type", Object)
+], UserEntity.prototype, "passwordHash", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'tinyint', unsigned: true, default: user_status_enum_1.UserStatus.Normal }),
     __metadata("design:type", Number)

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './user.entity';
+import { UserStatus } from './user-status.enum';
 
 @Injectable()
 export class UsersService {
@@ -36,6 +37,54 @@ export class UsersService {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('用户不存在');
     return user;
+  }
+
+  async findOnePublic(id: number) {
+    const user = await this.usersRepo.findOne({
+      where: { id },
+      select: { id: true, username: true, phone: true, status: true },
+    });
+    if (!user) throw new NotFoundException('用户不存在');
+    return user;
+  }
+
+  findByPhone(phone: string) {
+    return this.usersRepo.findOne({ where: { phone } });
+  }
+
+  findByPhoneWithSecret(phone: string) {
+    return this.usersRepo.findOne({
+      where: { phone },
+      select: {
+        id: true,
+        username: true,
+        phone: true,
+        status: true,
+        passwordHash: true,
+      },
+    });
+  }
+
+  async createWithPasswordHash(input: {
+    username: string;
+    phone: string;
+    passwordHash: string;
+    status?: UserStatus;
+  }) {
+    const existing = await this.usersRepo.findOne({
+      where: [{ username: input.username }, { phone: input.phone }],
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException('username 或 phone 已存在');
+    }
+    const entity = this.usersRepo.create({
+      username: input.username,
+      phone: input.phone,
+      passwordHash: input.passwordHash,
+      status: input.status,
+    });
+    return this.usersRepo.save(entity);
   }
 
   async update(id: number, dto: UpdateUserDto) {

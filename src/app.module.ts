@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module.js';
 
 /** 与 dist 同级，避免 PM2 工作目录不是项目根时读不到 .env */
@@ -44,6 +45,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
       },
     }),
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
