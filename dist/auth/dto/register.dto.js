@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class RegisterDto {
     username;
@@ -19,23 +20,27 @@ class RegisterDto {
 }
 exports.RegisterDto = RegisterDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '用户名', minLength: 2, maxLength: 64, example: 'zhangsan' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Length)(2, 64),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "username", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '11 位大陆手机号', example: '13800138000' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Matches)(/^1\d{10}$/, { message: '请输入 11 位大陆手机号' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "phone", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '密码，至少 8 位', minLength: 8, example: 'password12' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8, { message: '密码至少 8 位' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "password", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '短信验证码，4–8 位数字', example: '123456' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Matches)(/^\d{4,8}$/, { message: '验证码格式不正确' }),

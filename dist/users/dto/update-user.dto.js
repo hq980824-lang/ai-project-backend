@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateUserDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const user_status_enum_1 = require("../user-status.enum");
 class UpdateUserDto {
@@ -19,6 +20,7 @@ class UpdateUserDto {
 }
 exports.UpdateUserDto = UpdateUserDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: '用户名', minLength: 2, maxLength: 64, example: 'lisi' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
@@ -26,6 +28,7 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "username", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: '手机号（6–20 位数字，可带 +）', example: '13900000000' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
@@ -33,6 +36,11 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "phone", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        enum: user_status_enum_1.UserStatus,
+        description: '用户状态：0 禁用，1 正常',
+        example: user_status_enum_1.UserStatus.Normal,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsIn)([user_status_enum_1.UserStatus.Disabled, user_status_enum_1.UserStatus.Normal]),
     __metadata("design:type", Number)

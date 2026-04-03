@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginSmsDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class LoginSmsDto {
     phone;
@@ -17,12 +18,14 @@ class LoginSmsDto {
 }
 exports.LoginSmsDto = LoginSmsDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '11 位大陆手机号', example: '13800138000' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Matches)(/^1\d{10}$/, { message: '请输入 11 位大陆手机号' }),
     __metadata("design:type", String)
 ], LoginSmsDto.prototype, "phone", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: '短信验证码', example: '123456' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Matches)(/^\d{4,8}$/, { message: '验证码格式不正确' }),

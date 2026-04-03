@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
+const swagger_1 = require("@nestjs/swagger");
 const response_message_decorator_1 = require("../common/decorators/response-message.decorator");
 const auth_service_1 = require("./auth.service");
 const login_password_dto_1 = require("./dto/login-password.dto");
@@ -49,6 +50,7 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('sms/send'),
+    (0, swagger_1.ApiOperation)({ summary: '发送短信验证码' }),
     (0, response_message_decorator_1.ResponseMessage)('验证码已发送'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -57,6 +59,7 @@ __decorate([
 ], AuthController.prototype, "sendSms", null);
 __decorate([
     (0, common_1.Post)('register'),
+    (0, swagger_1.ApiOperation)({ summary: '用户注册' }),
     (0, response_message_decorator_1.ResponseMessage)('注册成功'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -65,6 +68,7 @@ __decorate([
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)('login/password'),
+    (0, swagger_1.ApiOperation)({ summary: '手机号密码登录' }),
     (0, response_message_decorator_1.ResponseMessage)('登录成功'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -73,6 +77,7 @@ __decorate([
 ], AuthController.prototype, "loginPassword", null);
 __decorate([
     (0, common_1.Post)('login/sms'),
+    (0, swagger_1.ApiOperation)({ summary: '手机号短信验证码登录' }),
     (0, response_message_decorator_1.ResponseMessage)('登录成功'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -82,6 +87,8 @@ __decorate([
 __decorate([
     (0, common_1.Get)('me'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, swagger_1.ApiBearerAuth)('JWT'),
+    (0, swagger_1.ApiOperation)({ summary: '当前登录用户信息' }),
     (0, response_message_decorator_1.ResponseMessage)('success'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -89,6 +96,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "me", null);
 exports.AuthController = AuthController = __decorate([
+    (0, swagger_1.ApiTags)('认证'),
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
         sms_service_1.SmsService])
