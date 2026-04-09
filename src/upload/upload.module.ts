@@ -3,9 +3,10 @@ import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
 import { Upload } from './upload.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Upload])],
+  imports: [TypeOrmModule.forFeature([Upload]), ConfigModule],
   controllers: [UploadController],
   providers: [UploadService],
 })

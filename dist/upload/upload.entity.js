@@ -15,7 +15,7 @@ let Upload = class Upload {
     id;
     originalName;
     filename;
-    path;
+    url;
     size;
     mimetype;
     createdAt;
@@ -36,7 +36,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Upload.prototype, "path", void 0);
+], Upload.prototype, "url", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Number)

@@ -15,8 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
-const multer_1 = require("multer");
-const path_1 = require("path");
 const response_message_decorator_1 = require("../common/decorators/response-message.decorator");
 const upload_service_1 = require("./upload.service");
 let UploadController = class UploadController {
@@ -24,28 +22,32 @@ let UploadController = class UploadController {
     constructor(uploadService) {
         this.uploadService = uploadService;
     }
-    async uploadFile(file) {
-        return await this.uploadService.saveFileInfo(file);
+    async uploadToOSS(file) {
+        return await this.uploadService.uploadToOSS(file);
+    }
+    async getPolicy() {
+        return await this.uploadService.getOSSPolicy();
     }
 };
 exports.UploadController = UploadController;
 __decorate([
-    (0, common_1.Post)('file'),
+    (0, common_1.Post)('oss'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
-        storage: (0, multer_1.diskStorage)({
-            destination: './uploads',
-            filename: (_req, file, cb) => {
-                const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                cb(null, uniqueName + (0, path_1.extname)(file.originalname));
-            },
-        }),
+        limits: { fileSize: 1024 * 1024 * 5 },
     })),
     (0, response_message_decorator_1.ResponseMessage)('上传成功'),
     __param(0, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], UploadController.prototype, "uploadFile", null);
+], UploadController.prototype, "uploadToOSS", null);
+__decorate([
+    (0, common_1.Get)('policy'),
+    (0, response_message_decorator_1.ResponseMessage)('获取policy成功'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], UploadController.prototype, "getPolicy", null);
 exports.UploadController = UploadController = __decorate([
     (0, common_1.Controller)('upload'),
     __metadata("design:paramtypes", [upload_service_1.UploadService])

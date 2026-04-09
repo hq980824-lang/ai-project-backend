@@ -10,13 +10,13 @@ export class Upload {
   @Column()
   originalName: string;
 
-  /** 文件名 */
+  /** OSS文件名 */
   @Column()
   filename: string;
 
   /** 文件路径 */
   @Column()
-  path: string;
+  url: string;
 
   /** 文件大小 */
   @Column()
