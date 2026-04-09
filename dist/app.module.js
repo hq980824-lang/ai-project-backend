@@ -18,6 +18,7 @@ const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter"
 const transform_response_interceptor_1 = require("./common/interceptors/transform-response.interceptor");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_js_1 = require("./users/users.module.js");
+const upload_module_1 = require("./upload/upload.module");
 const envRoot = (0, path_1.join)(__dirname, '..');
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 let AppModule = class AppModule {
@@ -54,6 +55,7 @@ exports.AppModule = AppModule = __decorate([
             }),
             users_module_js_1.UsersModule,
             auth_module_1.AuthModule,
+            upload_module_1.UploadModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
