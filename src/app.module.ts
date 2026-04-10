@@ -7,7 +7,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
-import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module.js';
 import { UploadModule } from './upload/upload.module';
 import { HefengModule } from './hefeng/hefeng.module';
@@ -20,10 +19,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [
-        join(envRoot, `.env.${nodeEnv}`),
-        join(envRoot, '.env'),
-      ],
+      envFilePath: [join(envRoot, `.env.${nodeEnv}`), join(envRoot, '.env')],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -47,7 +43,6 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
       },
     }),
     UsersModule,
-    AuthModule,
     UploadModule,
     HefengModule,
   ],
