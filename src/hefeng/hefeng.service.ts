@@ -75,7 +75,7 @@ export class HefengService {
   ): Promise<HefengIndecesVo[]> {
     const token = this.getClientToken();
     const baseUrl = this.config.get<string>('HEFENG_BASE_URL');
-    const types = (typeParam?.trim() || '0').replace(/\s/g, '');
+    const types = (typeParam?.trim() || '1,2').replace(/\s/g, '');
     const daysPath = this.pickIndicesPath(date);
 
     const res = await firstValueFrom(
@@ -97,6 +97,7 @@ export class HefengService {
 
     const daily = (body.daily ?? []).filter((item) => item.date === date);
     if (daily.length > 0) {
+      const now = new Date();
       const rows = daily.map((item) => ({
         location: cityId,
         forecastDate: item.date,
@@ -105,10 +106,19 @@ export class HefengService {
         level: item.level,
         category: item.category,
         text: item.text ?? null,
+        updatedAt: now,
       }));
-      await this.indicesRepo.upsert(rows, {
-        conflictPaths: ['location', 'forecastDate', 'type'],
-      });
+      await this.indicesRepo.manager
+        .createQueryBuilder()
+        .insert()
+        .into(HefengIndicesEntity)
+        .values(rows)
+        .orUpdate(
+          ['name', 'level', 'category', 'text', 'updated_at'],
+          ['location', 'forecast_date', 'type'],
+        )
+        .updateEntity(false)
+        .execute();
     }
 
     return daily;
