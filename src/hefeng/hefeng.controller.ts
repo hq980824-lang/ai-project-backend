@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
 import { HefengService } from './hefeng.service';
 import { HefengIndecesDto } from './dto/hefeng-indeces.dto';
+import { HefengSunDto } from './dto/hefeng-sun.dto';
 
 @ApiTags('和风天气')
 @Controller('hefeng')
@@ -33,5 +34,16 @@ export class HefengController {
       dto.date,
       dto.type,
     );
+  }
+
+  @Post('sun')
+  @ApiOperation({
+    summary: '日出日落',
+    description:
+      '调用和风 /v7/astronomy/sun，date 为 YYYY-MM-DD；结果写入数据库。详见 https://dev.qweather.com/docs/api/astronomy/sunrise-sunset/',
+  })
+  @ResponseMessage('success')
+  getSun(@Body() dto: HefengSunDto) {
+    return this.hefengService.getSunByDate(dto.cityId, dto.date);
   }
 }

@@ -7,8 +7,11 @@ import type { Request } from 'express';
 import { SignJWT, importPKCS8 } from 'jose';
 import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
+import { HefengAstronomySunEntity } from './entities/hefeng-astronomy-sun.entity';
 import { HefengIndicesEntity } from './entities/hefeng-indices.entity';
 import { HefengIndecesVo } from './vo/hefeng-indeces.vo';
+import { HefengSunVo } from './vo/hefeng-sun.vo';
+import { toChinaStandardDateTime } from './utils/hefeng-datetime.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class HefengService {
@@ -17,8 +20,24 @@ export class HefengService {
     private readonly httpService: HttpService,
     @InjectRepository(HefengIndicesEntity)
     private readonly indicesRepo: Repository<HefengIndicesEntity>,
+    @InjectRepository(HefengAstronomySunEntity)
+    private readonly sunRepo: Repository<HefengAstronomySunEntity>,
     @Inject(REQUEST) private readonly req: Request,
   ) {}
+
+  private resolveApiBaseUrl(hostOrUrl: string): string {
+    const t = hostOrUrl.trim();
+    if (!t) return '';
+    if (t.startsWith('http://') || t.startsWith('https://')) {
+      return t.replace(/\/$/, '');
+    }
+    return `https://${t.replace(/\/$/, '')}`;
+  }
+
+  /** YYYY-MM-DD → yyyyMMdd（和风 astronomy/sun 要求） */
+  private toQweatherCompactDate(ymd: string): string {
+    return ymd.replace(/-/g, '');
+  }
 
   /** 服务器本地日历日 YYYY-MM-DD（用于判断是否走 1d） */
   private localYmd(): string {
@@ -74,7 +93,9 @@ export class HefengService {
     typeParam?: string,
   ): Promise<HefengIndecesVo[]> {
     const token = this.getClientToken();
-    const baseUrl = this.config.get<string>('HEFENG_BASE_URL');
+    const baseUrl = this.resolveApiBaseUrl(
+      this.config.get<string>('HEFENG_BASE_URL') ?? '',
+    );
     const types = (typeParam?.trim() || '1,2').replace(/\s/g, '');
     const daysPath = this.pickIndicesPath(date);
 
@@ -122,5 +143,67 @@ export class HefengService {
     }
 
     return daily;
+  }
+
+  /**
+   * 日出日落 /v7/astronomy/sun
+   * @see https://dev.qweather.com/docs/api/astronomy/sunrise-sunset/
+   */
+  async getSunByDate(cityId: string, date: string): Promise<HefengSunVo> {
+    const token = this.getClientToken();
+    const baseUrl = this.resolveApiBaseUrl(
+      this.config.get<string>('HEFENG_BASE_URL') ?? '',
+    );
+    const dateParam = this.toQweatherCompactDate(date);
+
+    const res = await firstValueFrom(
+      this.httpService.get(`${baseUrl}/v7/astronomy/sun`, {
+        params: { location: cityId, date: dateParam },
+        headers: token ? { Authorization: token } : {},
+      }),
+    );
+
+    const body = res.data as {
+      code?: string;
+      updateTime?: string;
+      fxLink?: string;
+      sunrise?: string;
+      sunset?: string;
+    };
+    if (body.code !== '200') {
+      throw new BadRequestException(
+        `和风日出日落接口异常：code=${body.code ?? 'unknown'}`,
+      );
+    }
+
+    const payload: HefengSunVo = {
+      updateTime: toChinaStandardDateTime(body.updateTime),
+      fxLink: body.fxLink ?? null,
+      sunrise: toChinaStandardDateTime(body.sunrise),
+      sunset: toChinaStandardDateTime(body.sunset),
+    };
+
+    const now = new Date();
+    await this.sunRepo.manager
+      .createQueryBuilder()
+      .insert()
+      .into(HefengAstronomySunEntity)
+      .values({
+        location: cityId,
+        calendarDate: date,
+        sunrise: payload.sunrise,
+        sunset: payload.sunset,
+        updateTime: payload.updateTime,
+        fxLink: payload.fxLink,
+        updatedAt: now,
+      })
+      .orUpdate(
+        ['sunrise', 'sunset', 'update_time', 'fx_link', 'updated_at'],
+        ['location', 'calendar_date'],
+      )
+      .updateEntity(false)
+      .execute();
+
+    return payload;
   }
 }
