@@ -56,6 +56,12 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       mysql2:
         specifier: ^3.20.0
         version: 3.20.0(@types/node@22.19.15)
@@ -1660,6 +1666,9 @@ packages:
   jest-worker@27.5.1:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
+
+  jose@6.2.2:
+    resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
 
   js-base64@2.6.4:
     resolution: {integrity: sha512-pZe//GGmwJndub7ZghVHz7vjb2LgC1m8B07Au3eYqeqv9emhESByMXxaEgkUkEqJe87oBbSniGYoQNIBklc7IQ==}
@@ -4389,6 +4398,8 @@ snapshots:
       '@types/node': 22.19.15
       merge-stream: 2.0.0
       supports-color: 8.1.1
+
+  jose@6.2.2: {}
 
   js-base64@2.6.4: {}
 
