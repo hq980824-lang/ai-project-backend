@@ -1,28 +1,39 @@
-import { Injectable, Inject, Scope } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Scope } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SignJWT, importPKCS8 } from 'jose';
-import { HefengIndecesVo } from './vo/hefeng-indeces.vo';
+import { HttpService } from '@nestjs/axios';
+import { InjectRepository } from '@nestjs/typeorm';
 import { REQUEST } from '@nestjs/core';
 import type { Request } from 'express';
+import { SignJWT, importPKCS8 } from 'jose';
 import { firstValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
+import { Repository } from 'typeorm';
+import { HefengIndicesEntity } from './entities/hefeng-indices.entity';
+import { HefengIndecesVo } from './vo/hefeng-indeces.vo';
 
 @Injectable({ scope: Scope.REQUEST })
 export class HefengService {
   constructor(
     private readonly config: ConfigService,
     private readonly httpService: HttpService,
+    @InjectRepository(HefengIndicesEntity)
+    private readonly indicesRepo: Repository<HefengIndicesEntity>,
     @Inject(REQUEST) private readonly req: Request,
   ) {}
 
-  /** 控制台分配的 Host，无协议时补 https:// */
-  private resolveApiBaseUrl(hostOrUrl: string): string {
-    const t = hostOrUrl.trim();
-    if (!t) return '';
-    if (t.startsWith('http://') || t.startsWith('https://')) {
-      return t.replace(/\/$/, '');
-    }
-    return `https://${t.replace(/\/$/, '')}`;
+  /** 服务器本地日历日 YYYY-MM-DD（用于判断是否走 1d） */
+  private localYmd(): string {
+    const n = new Date();
+    const y = n.getFullYear();
+    const m = String(n.getMonth() + 1).padStart(2, '0');
+    const d = String(n.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  /**
+   * 和风路径仅支持 1d/3d：当天用 1d，其它日期用 3d 再在内存里按 date 过滤。
+   */
+  private pickIndicesPath(requestDate: string): '1d' | '3d' {
+    return requestDate === this.localYmd() ? '1d' : '3d';
   }
 
   /**
@@ -57,22 +68,49 @@ export class HefengService {
     return `Bearer ${token}`;
   }
 
-  async getIndicesByDays(
+  async getIndicesByDate(
     cityId: string,
-    days: string,
+    date: string,
+    typeParam?: string,
   ): Promise<HefengIndecesVo[]> {
     const token = this.getClientToken();
-    const baseUrl = this.resolveApiBaseUrl(
-      this.config.get<string>('HEFENG_BASE_URL') ?? '',
-    );
+    const baseUrl = this.config.get<string>('HEFENG_BASE_URL');
+    const types = (typeParam?.trim() || '0').replace(/\s/g, '');
+    const daysPath = this.pickIndicesPath(date);
 
     const res = await firstValueFrom(
-      this.httpService.get(`${baseUrl}/v7/indices/${days}`, {
-        params: { location: cityId, type: '1,2' },
+      this.httpService.get(`${baseUrl}/v7/indices/${daysPath}`, {
+        params: { location: cityId, type: types },
         headers: token ? { Authorization: token } : {},
       }),
     );
 
-    return res.data.daily;
+    const body = res.data as {
+      code?: string;
+      daily?: HefengIndecesVo[];
+    };
+    if (body.code !== '200') {
+      throw new BadRequestException(
+        `和风指数接口异常：code=${body.code ?? 'unknown'}`,
+      );
+    }
+
+    const daily = (body.daily ?? []).filter((item) => item.date === date);
+    if (daily.length > 0) {
+      const rows = daily.map((item) => ({
+        location: cityId,
+        forecastDate: item.date,
+        type: item.type,
+        name: item.name,
+        level: item.level,
+        category: item.category,
+        text: item.text ?? null,
+      }));
+      await this.indicesRepo.upsert(rows, {
+        conflictPaths: ['location', 'forecastDate', 'type'],
+      });
+    }
+
+    return daily;
   }
 }

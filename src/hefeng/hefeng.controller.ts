@@ -23,10 +23,15 @@ export class HefengController {
   @Post('indices')
   @ApiOperation({
     summary: '获取和风天气生活指数',
-    description: '获取和风天气生活指数',
+    description:
+      '按预报日期 YYYY-MM-DD 查询；type 为指数类型 ID（逗号分隔），不传默认 1,2。服务端按和风规则内部选用 1d/3d 请求。',
   })
   @ResponseMessage('success')
   getIndices(@Body() dto: HefengIndecesDto) {
-    return this.hefengService.getIndicesByDays(dto.cityId, dto.days);
+    return this.hefengService.getIndicesByDate(
+      dto.cityId,
+      dto.date,
+      dto.type,
+    );
   }
 }
