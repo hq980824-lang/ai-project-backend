@@ -4,6 +4,7 @@ import { UserEntity } from './user.entity';
 import { Repository } from 'typeorm';
 import Redis from 'ioredis';
 import { EmailService } from 'src/email/email.service';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class UsersService {
   constructor(
@@ -12,10 +13,18 @@ export class UsersService {
     @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
     private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private generateCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  private createToken(user: UserEntity) {
+    return this.jwtService.sign({
+      id: user.id,
+      email: user.email,
+    });
   }
 
   private registerOtpKey(email: string) {
@@ -45,7 +54,7 @@ export class UsersService {
       throw new HttpException('验证码错误或已过期', HttpStatus.BAD_REQUEST);
     }
 
-    const exists = await this.usersRepo.exists({ where: { email }});
+    const exists = await this.usersRepo.exists({ where: { email } });
 
     if (exists) {
       throw new HttpException('邮箱已注册', HttpStatus.BAD_REQUEST);
@@ -57,7 +66,10 @@ export class UsersService {
 
     await this.redis.del(this.registerOtpKey(email));
 
-    return user;
+    return {
+      user,
+      token: `Bearer ${this.createToken(user)}`
+    };
   }
 
   async login(email: string, code: string) {
@@ -67,7 +79,7 @@ export class UsersService {
       throw new HttpException('验证码错误或已过期', HttpStatus.BAD_REQUEST);
     }
 
-    const user = await this.usersRepo.findOne({ where: { email }});
+    const user = await this.usersRepo.findOne({ where: { email } });
 
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
@@ -78,6 +90,9 @@ export class UsersService {
 
     await this.redis.del(this.loginOtpKey(email));
 
-    return user;
+    return {
+      user,
+      token: `Bearer ${this.createToken(user)}`
+    };
   }
 }

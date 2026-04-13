@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const users_service_1 = require("./users.service");
 const response_message_decorator_1 = require("../common/decorators/response-message.decorator");
 const create_user_dto_1 = require("./dto/create-user.dto");
+const jwt_guard_1 = require("../auth/jwt.guard");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -34,6 +35,9 @@ let UsersController = class UsersController {
     }
     async login(dto) {
         return this.usersService.login(dto.email, dto.code);
+    }
+    getProfile(req) {
+        return req.user;
     }
 };
 exports.UsersController = UsersController;
@@ -69,6 +73,14 @@ __decorate([
     __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "login", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.Post)('profile'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getProfile", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('用户'),
     (0, common_1.Controller)('users'),

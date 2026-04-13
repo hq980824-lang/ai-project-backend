@@ -21,6 +21,7 @@ const upload_module_1 = require("./upload/upload.module");
 const hefeng_module_1 = require("./hefeng/hefeng.module");
 const redis_module_1 = require("./redis/redis.module");
 const email_module_1 = require("./email/email.module");
+const jwt_1 = require("@nestjs/jwt");
 const envRoot = (0, path_1.join)(__dirname, '..');
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 let AppModule = class AppModule {
@@ -32,6 +33,14 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 envFilePath: [(0, path_1.join)(envRoot, `.env.${nodeEnv}`), (0, path_1.join)(envRoot, '.env')],
+            }),
+            jwt_1.JwtModule.registerAsync({
+                inject: [config_1.ConfigService],
+                useFactory: (config) => ({
+                    secret: config.get('JWT_SECRET'),
+                    signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
+                }),
+                global: true
             }),
             typeorm_1.TypeOrmModule.forRootAsync({
                 inject: [config_1.ConfigService],

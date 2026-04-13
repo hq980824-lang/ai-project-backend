@@ -4,7 +4,22 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     sendRegisterCode(email: string): Promise<void>;
-    register(dto: CreateUserDto): Promise<import("./user.entity").UserEntity>;
+    register(dto: CreateUserDto): Promise<{
+        user: import("./user.entity").UserEntity;
+        token: string;
+    }>;
     sendLoginCode(email: string): Promise<void>;
-    login(dto: CreateUserDto): Promise<import("./user.entity").UserEntity>;
+    login(dto: CreateUserDto): Promise<{
+        user: import("./user.entity").UserEntity;
+        token: string;
+    }>;
+    getProfile(req: Request & {
+        user: {
+            id: number;
+            email: string;
+        };
+    }): {
+        id: number;
+        email: string;
+    };
 }

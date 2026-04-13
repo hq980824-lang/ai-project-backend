@@ -1,8 +1,16 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Request,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
+import { JwtGuard } from 'src/auth/jwt.guard';
 
 @ApiTags('用户')
 @Controller('users')
@@ -31,5 +39,13 @@ export class UsersController {
   @ResponseMessage('登录成功')
   async login(@Body() dto: CreateUserDto) {
     return this.usersService.login(dto.email, dto.code);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('profile')
+  getProfile(
+    @Request() req: Request & { user: { id: number; email: string } },
+  ) {
+    return req.user;
   }
 }

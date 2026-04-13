@@ -12,6 +12,7 @@ import { UploadModule } from './upload/upload.module';
 import { HefengModule } from './hefeng/hefeng.module';
 import { RedisModule } from './redis/redis.module';
 import { EmailModule } from './email/email.module';
+import { JwtModule } from '@nestjs/jwt';
 
 /** 与 dist 同级，避免 PM2 工作目录不是项目根时读不到 .env */
 const envRoot = join(__dirname, '..');
@@ -22,6 +23,14 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [join(envRoot, `.env.${nodeEnv}`), join(envRoot, '.env')],
+    }),
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get<number>('JWT_EXPIRES_IN') },
+      }),
+      global: true
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

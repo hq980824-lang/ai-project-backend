@@ -22,17 +22,26 @@ const user_entity_1 = require("./user.entity");
 const typeorm_2 = require("typeorm");
 const ioredis_1 = __importDefault(require("ioredis"));
 const email_service_1 = require("../email/email.service");
+const jwt_1 = require("@nestjs/jwt");
 let UsersService = class UsersService {
     usersRepo;
     redis;
     emailService;
-    constructor(usersRepo, redis, emailService) {
+    jwtService;
+    constructor(usersRepo, redis, emailService, jwtService) {
         this.usersRepo = usersRepo;
         this.redis = redis;
         this.emailService = emailService;
+        this.jwtService = jwtService;
     }
     generateCode() {
         return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    createToken(user) {
+        return this.jwtService.sign({
+            id: user.id,
+            email: user.email,
+        });
     }
     registerOtpKey(email) {
         return `users:otp:register:${email}`;
@@ -62,7 +71,10 @@ let UsersService = class UsersService {
         const user = this.usersRepo.create({ email });
         await this.usersRepo.save(user);
         await this.redis.del(this.registerOtpKey(email));
-        return user;
+        return {
+            user,
+            token: `Bearer ${this.createToken(user)}`
+        };
     }
     async login(email, code) {
         const correctCode = await this.redis.get(this.loginOtpKey(email));
@@ -76,7 +88,10 @@ let UsersService = class UsersService {
         user.lastLoginAt = new Date();
         await this.usersRepo.save(user);
         await this.redis.del(this.loginOtpKey(email));
-        return user;
+        return {
+            user,
+            token: `Bearer ${this.createToken(user)}`
+        };
     }
 };
 exports.UsersService = UsersService;
@@ -86,6 +101,7 @@ exports.UsersService = UsersService = __decorate([
     __param(1, (0, common_1.Inject)('REDIS_CLIENT')),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         ioredis_1.default,
-        email_service_1.EmailService])
+        email_service_1.EmailService,
+        jwt_1.JwtService])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map
