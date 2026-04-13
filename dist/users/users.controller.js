@@ -15,77 +15,60 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const users_service_1 = require("./users.service");
 const response_message_decorator_1 = require("../common/decorators/response-message.decorator");
 const create_user_dto_1 = require("./dto/create-user.dto");
-const update_user_dto_1 = require("./dto/update-user.dto");
-const users_service_1 = require("./users.service");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
         this.usersService = usersService;
     }
-    create(dto) {
-        return this.usersService.create(dto);
+    async sendRegisterCode(email) {
+        await this.usersService.sendRegisterCode(email);
     }
-    findAll() {
-        return this.usersService.findAll();
+    async register(dto) {
+        return this.usersService.register(dto.email, dto.code);
     }
-    findOne(id) {
-        return this.usersService.findOne(id);
+    async sendLoginCode(email) {
+        await this.usersService.sendLoginCode(email);
     }
-    update(id, dto) {
-        return this.usersService.update(id, dto);
-    }
-    remove(id) {
-        return this.usersService.remove(id);
+    async login(dto) {
+        return this.usersService.login(dto.email, dto.code);
     }
 };
 exports.UsersController = UsersController;
 __decorate([
-    (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: '创建用户' }),
-    (0, response_message_decorator_1.ResponseMessage)('新建成功'),
+    (0, common_1.Post)('register/send-code'),
+    (0, response_message_decorator_1.ResponseMessage)('验证码发送成功'),
+    __param(0, (0, common_1.Query)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "sendRegisterCode", null);
+__decorate([
+    (0, common_1.Post)('register'),
+    (0, response_message_decorator_1.ResponseMessage)('注册成功'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "create", null);
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "register", null);
 __decorate([
-    (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: '用户列表' }),
-    (0, response_message_decorator_1.ResponseMessage)('查询成功'),
+    (0, common_1.Post)('login/send-code'),
+    (0, response_message_decorator_1.ResponseMessage)('验证码发送成功'),
+    __param(0, (0, common_1.Query)('email')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "findAll", null);
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "sendLoginCode", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: '根据 ID 查询用户' }),
-    (0, swagger_1.ApiParam)({ name: 'id', description: '用户 ID', example: 1 }),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    (0, common_1.Post)('login'),
+    (0, response_message_decorator_1.ResponseMessage)('登录成功'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Patch)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: '更新用户' }),
-    (0, swagger_1.ApiParam)({ name: 'id', description: '用户 ID', example: 1 }),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_user_dto_1.UpdateUserDto]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: '删除用户' }),
-    (0, swagger_1.ApiParam)({ name: 'id', description: '用户 ID', example: 1 }),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "remove", null);
+    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "login", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('用户'),
     (0, common_1.Controller)('users'),

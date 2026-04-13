@@ -1,48 +1,35 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ResponseMessage } from '../common/decorators/response-message.decorator';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Body, Controller, Post, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @ApiTags('用户')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @ApiOperation({ summary: '创建用户' })
-  @ResponseMessage('新建成功')
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  @Post('register/send-code')
+  @ResponseMessage('验证码发送成功')
+  async sendRegisterCode(@Query('email') email: string) {
+    await this.usersService.sendRegisterCode(email);
   }
 
-  @Get()
-  @ApiOperation({ summary: '用户列表' })
-  @ResponseMessage('查询成功')
-  findAll() {
-    return this.usersService.findAll();
+  @Post('register')
+  @ResponseMessage('注册成功')
+  async register(@Body() dto: CreateUserDto) {
+    return this.usersService.register(dto.email, dto.code);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '根据 ID 查询用户' })
-  @ApiParam({ name: 'id', description: '用户 ID', example: 1 })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  @Post('login/send-code')
+  @ResponseMessage('验证码发送成功')
+  async sendLoginCode(@Query('email') email: string) {
+    await this.usersService.sendLoginCode(email);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: '更新用户' })
-  @ApiParam({ name: 'id', description: '用户 ID', example: 1 })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: '删除用户' })
-  @ApiParam({ name: 'id', description: '用户 ID', example: 1 })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @Post('login')
+  @ResponseMessage('登录成功')
+  async login(@Body() dto: CreateUserDto) {
+    return this.usersService.login(dto.email, dto.code);
   }
 }
-

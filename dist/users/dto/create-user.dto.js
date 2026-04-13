@@ -14,25 +14,27 @@ const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const user_status_enum_1 = require("../user-status.enum");
 class CreateUserDto {
-    username;
-    phone;
+    email;
+    code;
     status;
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: '用户名', minLength: 2, maxLength: 64, example: 'lisi' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Length)(2, 64),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: '邮箱',
+        example: 'test@example.com',
+    }),
+    (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "username", void 0);
+], CreateUserDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: '手机号（6–20 位数字，可带 +）', example: '13900000000' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: '验证码',
+        example: '123456',
+    }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Matches)(/^\+?\d{6,20}$/, { message: 'phone 格式不正确' }),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "phone", void 0);
+], CreateUserDto.prototype, "code", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         enum: user_status_enum_1.UserStatus,

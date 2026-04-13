@@ -10,6 +10,8 @@ import { TransformResponseInterceptor } from './common/interceptors/transform-re
 import { UsersModule } from './users/users.module.js';
 import { UploadModule } from './upload/upload.module';
 import { HefengModule } from './hefeng/hefeng.module';
+import { RedisModule } from './redis/redis.module';
+import { EmailModule } from './email/email.module';
 
 /** 与 dist 同级，避免 PM2 工作目录不是项目根时读不到 .env */
 const envRoot = join(__dirname, '..');
@@ -45,6 +47,8 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
     UsersModule,
     UploadModule,
     HefengModule,
+    RedisModule,
+    EmailModule
   ],
   controllers: [AppController],
   providers: [

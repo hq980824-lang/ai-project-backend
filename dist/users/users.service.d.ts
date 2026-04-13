@@ -1,25 +1,17 @@
-import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './user.entity';
-import { UserStatus } from './user-status.enum';
+import { Repository } from 'typeorm';
+import Redis from 'ioredis';
+import { EmailService } from 'src/email/email.service';
 export declare class UsersService {
     private readonly usersRepo;
-    constructor(usersRepo: Repository<UserEntity>);
-    create(dto: CreateUserDto): Promise<UserEntity>;
-    findAll(): Promise<UserEntity[]>;
-    findOne(id: number): Promise<UserEntity>;
-    findOnePublic(id: number): Promise<UserEntity>;
-    findByPhone(phone: string): Promise<UserEntity | null>;
-    findByPhoneWithSecret(phone: string): Promise<UserEntity | null>;
-    createWithPasswordHash(input: {
-        username: string;
-        phone: string;
-        passwordHash: string;
-        status?: UserStatus;
-    }): Promise<UserEntity>;
-    update(id: number, dto: UpdateUserDto): Promise<UserEntity>;
-    remove(id: number): Promise<{
-        deleted: boolean;
-    }>;
+    private readonly redis;
+    private readonly emailService;
+    constructor(usersRepo: Repository<UserEntity>, redis: Redis, emailService: EmailService);
+    private generateCode;
+    private registerOtpKey;
+    private loginOtpKey;
+    sendRegisterCode(email: string): Promise<void>;
+    sendLoginCode(email: string): Promise<void>;
+    register(email: string, code: string): Promise<UserEntity>;
+    login(email: string, code: string): Promise<UserEntity>;
 }

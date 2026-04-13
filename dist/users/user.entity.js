@@ -14,9 +14,8 @@ const typeorm_1 = require("typeorm");
 const user_status_enum_1 = require("./user-status.enum");
 let UserEntity = class UserEntity {
     id;
-    username;
-    phone;
-    passwordHash;
+    email;
+    lastLoginAt;
     status;
 };
 exports.UserEntity = UserEntity;
@@ -25,19 +24,13 @@ __decorate([
     __metadata("design:type", Number)
 ], UserEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Index)({ unique: true }),
-    (0, typeorm_1.Column)({ type: 'varchar', length: 64 }),
+    (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], UserEntity.prototype, "username", void 0);
+], UserEntity.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Index)({ unique: true }),
-    (0, typeorm_1.Column)({ type: 'varchar', length: 20 }),
-    __metadata("design:type", String)
-], UserEntity.prototype, "phone", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'password_hash', type: 'varchar', length: 128, nullable: true }),
-    __metadata("design:type", Object)
-], UserEntity.prototype, "passwordHash", void 0);
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], UserEntity.prototype, "lastLoginAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'tinyint', unsigned: true, default: user_status_enum_1.UserStatus.Normal }),
     __metadata("design:type", Number)

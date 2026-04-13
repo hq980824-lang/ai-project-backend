@@ -16,10 +16,11 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 const transform_response_interceptor_1 = require("./common/interceptors/transform-response.interceptor");
-const auth_module_1 = require("./auth/auth.module");
 const users_module_js_1 = require("./users/users.module.js");
 const upload_module_1 = require("./upload/upload.module");
 const hefeng_module_1 = require("./hefeng/hefeng.module");
+const redis_module_1 = require("./redis/redis.module");
+const email_module_1 = require("./email/email.module");
 const envRoot = (0, path_1.join)(__dirname, '..');
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 let AppModule = class AppModule {
@@ -30,10 +31,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-                envFilePath: [
-                    (0, path_1.join)(envRoot, `.env.${nodeEnv}`),
-                    (0, path_1.join)(envRoot, '.env'),
-                ],
+                envFilePath: [(0, path_1.join)(envRoot, `.env.${nodeEnv}`), (0, path_1.join)(envRoot, '.env')],
             }),
             typeorm_1.TypeOrmModule.forRootAsync({
                 inject: [config_1.ConfigService],
@@ -55,9 +53,10 @@ exports.AppModule = AppModule = __decorate([
                 },
             }),
             users_module_js_1.UsersModule,
-            auth_module_1.AuthModule,
             upload_module_1.UploadModule,
             hefeng_module_1.HefengModule,
+            redis_module_1.RedisModule,
+            email_module_1.EmailModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [

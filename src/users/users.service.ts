@@ -1,118 +1,83 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './user.entity';
-import { UserStatus } from './user-status.enum';
-
+import { Repository } from 'typeorm';
+import Redis from 'ioredis';
+import { EmailService } from 'src/email/email.service';
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
+    @Inject('REDIS_CLIENT')
+    private readonly redis: Redis,
+    private readonly emailService: EmailService,
   ) {}
 
-  async create(dto: CreateUserDto) {
-    const existing = await this.usersRepo.findOne({
-      where: [{ username: dto.username }, { phone: dto.phone }],
-      select: { id: true },
-    });
-    if (existing) {
-      throw new ConflictException('username 或 phone 已存在');
+  private generateCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  private registerOtpKey(email: string) {
+    return `users:otp:register:${email}`;
+  }
+
+  private loginOtpKey(email: string) {
+    return `users:otp:login:${email}`;
+  }
+
+  async sendRegisterCode(email: string) {
+    const code = this.generateCode();
+    await this.redis.set(this.registerOtpKey(email), code, 'EX', 300);
+    await this.emailService.sendCode(email, code);
+  }
+
+  async sendLoginCode(email: string) {
+    const code = this.generateCode();
+    await this.redis.set(this.loginOtpKey(email), code, 'EX', 300);
+    await this.emailService.sendCode(email, code);
+  }
+
+  async register(email: string, code: string) {
+    const correctCode = await this.redis.get(this.registerOtpKey(email));
+
+    if (!correctCode || correctCode !== code) {
+      throw new HttpException('验证码错误或已过期', HttpStatus.BAD_REQUEST);
     }
 
-    const entity = this.usersRepo.create({
-      ...dto,
-      status: dto.status ?? undefined,
-    });
-    return await this.usersRepo.save(entity);
-  }
+    const exists = await this.usersRepo.exists({ where: { email }});
 
-  async findAll() {
-    return await this.usersRepo.find({ order: { id: 'DESC' } });
-  }
+    if (exists) {
+      throw new HttpException('邮箱已注册', HttpStatus.BAD_REQUEST);
+    }
 
-  async findOne(id: number) {
-    const user = await this.usersRepo.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('用户不存在');
+    const user = this.usersRepo.create({ email });
+
+    await this.usersRepo.save(user);
+
+    await this.redis.del(this.registerOtpKey(email));
+
     return user;
   }
 
-  async findOnePublic(id: number) {
-    const user = await this.usersRepo.findOne({
-      where: { id },
-      select: { id: true, username: true, phone: true, status: true },
-    });
-    if (!user) throw new NotFoundException('用户不存在');
+  async login(email: string, code: string) {
+    const correctCode = await this.redis.get(this.loginOtpKey(email));
+
+    if (!correctCode || correctCode !== code) {
+      throw new HttpException('验证码错误或已过期', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.usersRepo.findOne({ where: { email }});
+
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    user.lastLoginAt = new Date();
+    await this.usersRepo.save(user);
+
+    await this.redis.del(this.loginOtpKey(email));
+
     return user;
-  }
-
-  findByPhone(phone: string) {
-    return this.usersRepo.findOne({ where: { phone } });
-  }
-
-  findByPhoneWithSecret(phone: string) {
-    return this.usersRepo.findOne({
-      where: { phone },
-      select: {
-        id: true,
-        username: true,
-        phone: true,
-        status: true,
-        passwordHash: true,
-      },
-    });
-  }
-
-  async createWithPasswordHash(input: {
-    username: string;
-    phone: string;
-    passwordHash: string;
-    status?: UserStatus;
-  }) {
-    const existing = await this.usersRepo.findOne({
-      where: [{ username: input.username }, { phone: input.phone }],
-      select: { id: true },
-    });
-    if (existing) {
-      throw new ConflictException('username 或 phone 已存在');
-    }
-    const entity = this.usersRepo.create({
-      username: input.username,
-      phone: input.phone,
-      passwordHash: input.passwordHash,
-      status: input.status,
-    });
-    return this.usersRepo.save(entity);
-  }
-
-  async update(id: number, dto: UpdateUserDto) {
-    const user = await this.findOne(id);
-
-    if (dto.username && dto.username !== user.username) {
-      const hit = await this.usersRepo.findOne({
-        where: { username: dto.username },
-        select: { id: true },
-      });
-      if (hit) throw new ConflictException('username 已存在');
-    }
-    if (dto.phone && dto.phone !== user.phone) {
-      const hit = await this.usersRepo.findOne({
-        where: { phone: dto.phone },
-        select: { id: true },
-      });
-      if (hit) throw new ConflictException('phone 已存在');
-    }
-
-    Object.assign(user, dto);
-    return await this.usersRepo.save(user);
-  }
-
-  async remove(id: number) {
-    const user = await this.findOne(id);
-    await this.usersRepo.remove(user);
-    return { deleted: true };
   }
 }
-

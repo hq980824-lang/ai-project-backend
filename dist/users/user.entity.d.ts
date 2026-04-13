@@ -1,8 +1,7 @@
 import { UserStatus } from './user-status.enum';
 export declare class UserEntity {
     id: number;
-    username: string;
-    phone: string;
-    passwordHash: string | null;
+    email: string;
+    lastLoginAt: Date;
     status: UserStatus;
 }

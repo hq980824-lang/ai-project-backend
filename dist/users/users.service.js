@@ -11,111 +11,81 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const typeorm_2 = require("typeorm");
 const user_entity_1 = require("./user.entity");
+const typeorm_2 = require("typeorm");
+const ioredis_1 = __importDefault(require("ioredis"));
+const email_service_1 = require("../email/email.service");
 let UsersService = class UsersService {
     usersRepo;
-    constructor(usersRepo) {
+    redis;
+    emailService;
+    constructor(usersRepo, redis, emailService) {
         this.usersRepo = usersRepo;
+        this.redis = redis;
+        this.emailService = emailService;
     }
-    async create(dto) {
-        const existing = await this.usersRepo.findOne({
-            where: [{ username: dto.username }, { phone: dto.phone }],
-            select: { id: true },
-        });
-        if (existing) {
-            throw new common_1.ConflictException('username 或 phone 已存在');
+    generateCode() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    registerOtpKey(email) {
+        return `users:otp:register:${email}`;
+    }
+    loginOtpKey(email) {
+        return `users:otp:login:${email}`;
+    }
+    async sendRegisterCode(email) {
+        const code = this.generateCode();
+        await this.redis.set(this.registerOtpKey(email), code, 'EX', 300);
+        await this.emailService.sendCode(email, code);
+    }
+    async sendLoginCode(email) {
+        const code = this.generateCode();
+        await this.redis.set(this.loginOtpKey(email), code, 'EX', 300);
+        await this.emailService.sendCode(email, code);
+    }
+    async register(email, code) {
+        const correctCode = await this.redis.get(this.registerOtpKey(email));
+        if (!correctCode || correctCode !== code) {
+            throw new common_1.HttpException('验证码错误或已过期', common_1.HttpStatus.BAD_REQUEST);
         }
-        const entity = this.usersRepo.create({
-            ...dto,
-            status: dto.status ?? undefined,
-        });
-        return await this.usersRepo.save(entity);
-    }
-    async findAll() {
-        return await this.usersRepo.find({ order: { id: 'DESC' } });
-    }
-    async findOne(id) {
-        const user = await this.usersRepo.findOne({ where: { id } });
-        if (!user)
-            throw new common_1.NotFoundException('用户不存在');
+        const exists = await this.usersRepo.exists({ where: { email } });
+        if (exists) {
+            throw new common_1.HttpException('邮箱已注册', common_1.HttpStatus.BAD_REQUEST);
+        }
+        const user = this.usersRepo.create({ email });
+        await this.usersRepo.save(user);
+        await this.redis.del(this.registerOtpKey(email));
         return user;
     }
-    async findOnePublic(id) {
-        const user = await this.usersRepo.findOne({
-            where: { id },
-            select: { id: true, username: true, phone: true, status: true },
-        });
-        if (!user)
-            throw new common_1.NotFoundException('用户不存在');
+    async login(email, code) {
+        const correctCode = await this.redis.get(this.loginOtpKey(email));
+        if (!correctCode || correctCode !== code) {
+            throw new common_1.HttpException('验证码错误或已过期', common_1.HttpStatus.BAD_REQUEST);
+        }
+        const user = await this.usersRepo.findOne({ where: { email } });
+        if (!user) {
+            throw new common_1.HttpException('用户不存在', common_1.HttpStatus.BAD_REQUEST);
+        }
+        user.lastLoginAt = new Date();
+        await this.usersRepo.save(user);
+        await this.redis.del(this.loginOtpKey(email));
         return user;
-    }
-    findByPhone(phone) {
-        return this.usersRepo.findOne({ where: { phone } });
-    }
-    findByPhoneWithSecret(phone) {
-        return this.usersRepo.findOne({
-            where: { phone },
-            select: {
-                id: true,
-                username: true,
-                phone: true,
-                status: true,
-                passwordHash: true,
-            },
-        });
-    }
-    async createWithPasswordHash(input) {
-        const existing = await this.usersRepo.findOne({
-            where: [{ username: input.username }, { phone: input.phone }],
-            select: { id: true },
-        });
-        if (existing) {
-            throw new common_1.ConflictException('username 或 phone 已存在');
-        }
-        const entity = this.usersRepo.create({
-            username: input.username,
-            phone: input.phone,
-            passwordHash: input.passwordHash,
-            status: input.status,
-        });
-        return this.usersRepo.save(entity);
-    }
-    async update(id, dto) {
-        const user = await this.findOne(id);
-        if (dto.username && dto.username !== user.username) {
-            const hit = await this.usersRepo.findOne({
-                where: { username: dto.username },
-                select: { id: true },
-            });
-            if (hit)
-                throw new common_1.ConflictException('username 已存在');
-        }
-        if (dto.phone && dto.phone !== user.phone) {
-            const hit = await this.usersRepo.findOne({
-                where: { phone: dto.phone },
-                select: { id: true },
-            });
-            if (hit)
-                throw new common_1.ConflictException('phone 已存在');
-        }
-        Object.assign(user, dto);
-        return await this.usersRepo.save(user);
-    }
-    async remove(id) {
-        const user = await this.findOne(id);
-        await this.usersRepo.remove(user);
-        return { deleted: true };
     }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, common_1.Inject)('REDIS_CLIENT')),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        ioredis_1.default,
+        email_service_1.EmailService])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

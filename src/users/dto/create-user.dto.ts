@@ -1,19 +1,21 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsIn, IsOptional, IsString } from 'class-validator';
 import { UserStatus } from '../user-status.enum';
 
 export class CreateUserDto {
-  @ApiProperty({ description: '用户名', minLength: 2, maxLength: 64, example: 'lisi' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(2, 64)
-  username: string;
+  @ApiPropertyOptional({
+    description: '邮箱',
+    example: 'test@example.com',
+  })
+  @IsEmail()
+  email: string;
 
-  @ApiProperty({ description: '手机号（6–20 位数字，可带 +）', example: '13900000000' })
+  @ApiPropertyOptional({
+    description: '验证码',
+    example: '123456',
+  })
   @IsString()
-  @IsNotEmpty()
-  @Matches(/^\+?\d{6,20}$/, { message: 'phone 格式不正确' })
-  phone: string;
+  code: string;
 
   @ApiPropertyOptional({
     enum: UserStatus,
